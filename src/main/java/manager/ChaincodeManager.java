@@ -1,5 +1,6 @@
 package manager;
 
+import encrypt.AESdemo;
 import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.CryptoException;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
@@ -7,6 +8,7 @@ import org.hyperledger.fabric.sdk.exception.ProposalException;
 import org.hyperledger.fabric.sdk.exception.TransactionException;
 import org.slf4j.LoggerFactory;
 
+import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -25,7 +27,23 @@ public class ChaincodeManager {
     private ChaincodeID chaincodeID;
 
 
-    public Map<String, String> invoke(String fcn, String[] args) throws Exception {
+    /**
+     * Decrypt
+     *
+     * @param fcn
+     * @param key-value
+     * @return
+     * @throws
+     */
+    public Map<String, String> invoke(String fcn, String[] userMessage) throws Exception {
+        AESdemo cs = new AESdemo();
+        byte[] userHash = cs.jdkSha256(userMessage[0]);
+        cs.genKey(userHash);
+        byte[] encontent = cs.Encrytor(userMessage[1].getBytes("UTF-8"));
+        String value = new String(encontent);
+        String[] args = new String[2];
+        args[0]= "340221199412200415";         //暂以身份证为key，在AESdemo中新加接口，获得公钥作为key
+        args[1]= value;
         Map<String, String> resultMap = new HashMap<String, String>();
         Collection<ProposalResponse> successful = new LinkedList<ProposalResponse>();
         Collection<ProposalResponse> failed = new LinkedList<ProposalResponse>();
@@ -75,7 +93,11 @@ public class ChaincodeManager {
         }
     }
 
-    public Map<String, String> query(String fcn, String[] args) throws InvalidArgumentException, ProposalException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, CryptoException, TransactionException, IOException {
+    public Map<String, String> query(String fcn, String[] args) throws
+            InvalidArgumentException, ProposalException, NoSuchAlgorithmException, NoSuchProviderException,
+            InvalidKeySpecException, CryptoException, TransactionException, IOException , NoSuchPaddingException
+    {
+
         Map<String, String> resultMap = new HashMap<String, String>();
         String payload = "";
         QueryByChaincodeRequest queryByChaincodeRequest = client.newQueryProposalRequest();
